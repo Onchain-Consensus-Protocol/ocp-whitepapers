@@ -29,7 +29,7 @@
 
 ## 经济模型（中本聪精神）
 
-- **奖励减半**：当前纪元 `E = totalFinalizedEvents / EPOCH_SIZE`（EPOCH_SIZE = 210_000）。终局时发放的声誉增量 = 赢方质押 × `(PRECISION >> E)` × 深度溢价 / PRECISION²，即随纪元 1.0 → 0.5 → 0.25。
+- **奖励减半**：当前纪元 `E = totalFinalizedEvents / EPOCH_SIZE`（EPOCH_SIZE = 21_000）。终局时发放的声誉增量 = 赢方质押 × `(PRECISION >> E)` × 深度溢价 / PRECISION²，即随纪元 1.0 → 0.5 → 0.25。
 - **声誉永恒**：`cumulativeWinningStake` 只增不减；减半仅影响**本事件新赚取的**声誉量。
 - **资源约束**：`maxDepth(64)`、单父；创建子事件时父必须已终局。
 

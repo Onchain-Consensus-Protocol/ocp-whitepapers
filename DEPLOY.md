@@ -128,7 +128,51 @@ npm run start
 
 ---
 
-## 四、安全提醒
+## 四、前端（ocp-browser）发布到 Vercel
+
+**只发主页时**：不用部署合约、不用部署 ocp-api，只把前端直接托管到 Vercel 即可。
+
+### 方式 A：用 GitHub 部署（推送代码后自动部署）
+
+1. 把项目推送到 GitHub（若尚未推送）。
+2. 用 GitHub 登录 [Vercel](https://vercel.com)，**Add New → Project**，导入仓库，**Root Directory** 填 `ocp-browser`。
+3. **Framework** 选 Vite，**Build** 用 `npm run build`，**Output** 为 `dist`，需要的话在 **Environment Variables** 里加变量。
+4. 点击 **Deploy**，之后每次 push 到该仓库会自动重新部署。
+
+### 方式 B：本地用 Vercel CLI 部署（无需 GitHub）
+
+不推前端代码到 GitHub 也可以发布，在本地用 CLI 直接上传构建结果即可。
+
+1. 进入前端目录并**先登录**（否则会报 token 无效）：
+   ```bash
+   cd ocp-browser
+   npx vercel login    # 按提示用浏览器或邮箱登录，完成后再继续
+   ```
+2. 构建并部署：
+   ```bash
+   npm run build
+   npx vercel --prod   # 首次会问项目名等，选默认即可
+   ```
+3. 终端会给出预览/生产域名（如 `https://ocp-browser-xxx.vercel.app`）。之后要更新站点时，在 `ocp-browser` 下再执行 `npm run build` 和 `npx vercel --prod` 即可。
+
+绑定自定义域名仍在 Vercel 对应项目的 **Settings → Domains** 里操作，与是否用 GitHub 无关。
+
+---
+
+## 五、在 Vercel 绑定自己的域名
+
+1. 在 Vercel 打开对应项目（ocp-api 或 ocp-browser），进入 **Settings → Domains**。
+2. 在 **Domain** 输入框填入你的域名（如 `app.yourdomain.com` 或 `yourdomain.com`），点击 **Add**。
+3. 按 Vercel 提示在域名服务商处添加 DNS 记录：
+   - **推荐（CNAME）**：  
+     类型 `CNAME`，名称填子域名（如 `app` 或 `www`），目标填 `cname.vercel-dns.com`。  
+     根域名（如 `yourdomain.com`）若要用 Vercel，类型选 `A`，目标填 `76.76.21.21`（或按 Vercel 页面上显示的 IP）。
+   - **或用 Vercel DNS**：若域名在 Vercel 购买或已把 NS 指到 Vercel，在 **Domains** 里可一键验证。
+4. 保存 DNS 后等待生效（几分钟到 48 小时不等）。**Domains** 里状态变为 **Valid** 即绑定成功，Vercel 会自动为域名签发 HTTPS。
+
+---
+
+## 六、安全提醒
 
 - 所有私钥仅用于**测试网**，且不要提交到仓库。  
 - `PRIVATE_KEY` 只放在本机或 Vercel 的 Environment Variables，不要写进代码或前端。  
