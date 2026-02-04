@@ -1,6 +1,6 @@
 # 预测市场 MVP 实现说明
 
-> 本 MVP 基于**资本承诺协议**（CCP）的预测市场应用。协议设计（一次性挑战）见 [CAPITAL_COMMITMENT_PROTOCOL_WHITEPAPER_CN.md](./CAPITAL_COMMITMENT_PROTOCOL_WHITEPAPER_CN.md)。
+> 本 MVP 基于**共识上链协议（OCP）**与**承诺证明（POC）**的预测市场应用。协议设计（一次性挑战）见 [POC_WHITEPAPER_CN.md](./POC_WHITEPAPER_CN.md)。
 
 ## 已实现（最小可用链）
 
@@ -33,5 +33,5 @@
 
 ## 待实现（后续版本）
 
-- **一次性挑战 + 最终对决期**（CCP 协议核心）
+- **一次性挑战 + 最终对决期**（OCP/POC 协议核心）
 - 躺平惩罚（30/70 分红）
