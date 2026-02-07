@@ -4,6 +4,138 @@
 
 ---
 
+## 零、Base 测试网（Base Sepolia）添加与水龙头
+
+### 在钱包里添加 Base Sepolia
+
+在 MetaMask（或支持自定义网络的钱包）中：
+
+1. 打开 **设置 → 网络 → 添加网络**（或「添加网络」/「Add network」）。
+2. 选择「手动添加网络」并填写下表：
+
+| 字段 | 值 |
+|------|-----|
+| **网络名称** | Base Sepolia |
+| **RPC URL** | `https://base-sepolia-rpc.publicnode.com`（或 `https://sepolia.base.org`） |
+| **Chain ID** | `84532` |
+| **货币符号** | ETH |
+| **区块浏览器** | `https://sepolia.basescan.org` |
+
+保存后切换到该网络即可。
+
+### Base Sepolia 水龙头（领测试 ETH）
+
+测试网 gas 需要 Base Sepolia 上的 ETH。**若被 Alchemy 等提示「主网无历史」**，优先用下面「不需主网历史」的那几个。
+
+**不需主网历史 / 不需登录（连钱包即可或极简验证）：**
+
+| 水龙头 | 链接 | 说明 |deployerPrivateKey
+|--------|------|------|
+| **Bware Labs** | https://bwarelabs.com/faucets | 无需注册，选 Base Sepolia，24 小时一次 |
+| **Ponzifun** | https://testnet.ponzi.fun/faucet | 无验证、无注册，约 1 ETH / 48 小时 |
+| **Ethereum Ecosystem** | https://www.ethereum-ecosystem.com/faucets/base-sepolia | 无需登录，约 0.5 ETH / 24 小时 |
+| **Chainlink** | https://faucets.chain.link/base-sepolia | 连钱包 + 选 Base Sepolia，无主网要求 |
+| **QuickNode** | https://faucet.quicknode.com/base/sepolia | 连钱包，每 12 小时一次 |
+| **thirdweb** | https://thirdweb.com/base-sepolia-testnet | 支持钱包或社交登录，24 小时一次 |
+| **ethfaucet.com** | https://ethfaucet.com/networks/base | 选 Base Sepolia，24 小时限一次 |
+
+**可能需要登录或主网条件：**
+
+| 水龙头 | 链接 | 说明 |
+|--------|------|------|
+| **Coinbase Developer** | https://portal.cdp.coinbase.com/products/faucet | Coinbase 开发者账号，24 小时一次 |
+| **Superchain (Optimism)** | https://app.optimism.io/faucet | 选 Base，有链上身份可领更多 |
+| **Alchemy** | https://www.alchemy.com/faucets/base-sepolia | 常要求主网有 0.001 ETH 和交易历史 |
+| **LearnWeb3** | https://learnweb3.io/faucets/base_sepolia/ | GitHub 登录，约 0.01 ETH/天 |
+
+领到测试 ETH 后即可在 Base Sepolia 上部署合约或与前端交互。
+
+### 当前已部署（Base Sepolia）
+
+| 合约 | 地址 |
+|------|------|
+| MockERC20 (deposit token) | `0xe343be8F1d8572937da49234882e6a1eF4FFEb26` |
+| OCPVaultFactory | `0x794D87e33Eb83Dd6f735f76F8Cd551C2901B9b8D` |
+
+ocp-api 的 `.env` 与前端 `ocp-browser/.env` 已按上表配置（FACTORY_ADDRESS / VITE_FACTORY_ADDRESS、DEPOSIT_TOKEN_ADDRESS / VITE_DEPOSIT_TOKEN_ADDRESS）。
+
+### 重新部署合约并更新前端/API 地址
+
+在本机执行（需已 `source solidity/.env` 且 `PRIVATE_KEY` 已设）：
+
+```bash
+cd solidity
+source .env
+forge script script/Deploy.s.sol:DeployScript --rpc-url https://base-sepolia-rpc.publicnode.com --broadcast
+```
+
+终端会输出两行，例如：
+
+- `MockERC20 (deposit token): 0x...`
+- `OCPVaultFactory: 0x...`
+
+**更新前端**：把上述两个地址填入 `ocp-browser/.env`：
+
+- `VITE_FACTORY_ADDRESS=<工厂地址>`
+- `VITE_DEPOSIT_TOKEN_ADDRESS=<MockERC20 地址>`
+
+**更新 API**：在 `ocp-api/.env` 中填入：
+
+- `FACTORY_ADDRESS=<工厂地址>`
+- `DEPOSIT_TOKEN_ADDRESS=<MockERC20 地址>`
+
+前端金库 ABI 已使用 `depositAndVote(uint256 amount, bool isYes)`，无需再改。
+
+**领测试代币（Mock 未验证时）**：前端探索页在「当前存款代币」为上述 Mock OCPT 时会显示「领 OCPT 测试代币」按钮，点击即可给自己 mint 1000 OCPT（需少量 Base Sepolia ETH 付 gas），无需在区块浏览器验证合约。
+
+### 验证 MockERC20 合约（可选）
+
+若希望在 BaseScan 上显示 Read/Write Contract 界面，可用 Foundry 提交验证（需 BaseScan API Key，在 https://sepolia.basescan.org/myapikey 创建）：
+
+```bash
+cd solidity
+export ETHERSCAN_API_KEY=你的_BaseScan_API_Key
+forge verify-contract 0xd6f268AF3C4C4Dd7852f51aedd9De12e7048Ec73 script/Deploy.s.sol:MockERC20 --chain-id 84532 --watch
+```
+
+验证通过后，在 https://sepolia.basescan.org/address/0xd6f268AF3C4C4Dd7852f51aedd9De12e7048Ec73#writeContract 即可在浏览器里直接调用 `mint`。
+
+### 验证金库与预测市场合约（Base Sepolia）
+
+在 `solidity` 目录下执行（需已设置 `ETHERSCAN_API_KEY`，如 `source .env`）：
+
+**金库 OCPVault**（地址 `0x2EC476C145F332539F9311802dDACb48bF16f584`）：
+
+```bash
+cd solidity && source .env
+forge verify-contract 0x2EC476C145F332539F9311802dDACb48bF16f584 src/core/OCPVault.sol:OCPVault --chain base-sepolia --constructor-args $(cast abi-encode "constructor(address,address,uint256)" 0x32eB2a7d95301a1B7f42Ad64fd255D2c273f6f8f 0xd6f268AF3C4C4Dd7852f51aedd9De12e7048Ec73 1770436800) --watch
+```
+
+**预测市场 PredictionMarket**（地址 `0x5E3e3D20f429C4f9F8675DA354210c6FfBEb2602`）：
+
+```bash
+forge verify-contract 0x5E3e3D20f429C4f9F8675DA354210c6FfBEb2602 src/market/PredictionMarket.sol:PredictionMarket --chain base-sepolia --constructor-args $(cast abi-encode "constructor(address,address,uint8,bytes,uint256)" 0x2EC476C145F332539F9311802dDACb48bF16f584 0x0000000000000000000000000000000000000000 0 0x 1770436800) --watch
+```
+
+验证成功后，在 https://sepolia.basescan.org 搜索上述地址即可看到源码与 Read/Write Contract。
+
+### 部署到 Base Sepolia 时用的 RPC
+
+部署合约时 `--rpc-url` 使用（任选其一）：
+
+```text
+https://base-sepolia-rpc.publicnode.com
+```
+或 `https://sepolia.base.org`
+
+前端/API 若接 Base Sepolia，环境变量示例：
+
+- `VITE_CHAIN_ID=84532`
+- `VITE_RPC_URL=https://base-sepolia-rpc.publicnode.com`
+- `VITE_EXPLORER=https://sepolia.basescan.org`
+
+---
+
 ## 一、部署合约到测试网
 
 ### 1. 环境
@@ -33,16 +165,35 @@ forge build
 
 设置私钥（仅测试网、勿用主网私钥），然后执行部署脚本：
 
+**以太坊 Sepolia：**
+
 ```bash
 cd solidity
 export PRIVATE_KEY=0x你的测试网钱包私钥
 forge script script/Deploy.s.sol:DeployScript --rpc-url https://sepolia.infura.io/v3/YOUR_KEY --broadcast
 ```
 
-- `--rpc-url` 可换成任意 Sepolia RPC（如 Alchemy、Public 等）。
+**Base Sepolia：**（RPC 无需 API key，先到「零、Base 测试网」领水龙头）
+
+在 `solidity` 目录下，设置私钥后执行（二选一）：
+
+**重要**：Foundry 只读取 **`solidity/.env`**（与 `foundry.toml` 同级），不会读 `solidity/src/.env`。若你把私钥写在 `src/.env`，请改写到 `solidity/.env` 或执行：
+`grep PRIVATE_KEY solidity/src/.env >> solidity/.env` 后编辑 `solidity/.env` 只保留一行正确的 `PRIVATE_KEY=0x...`。
+
+```bash
+cd solidity
+# 方式一：直接导出（仅当前终端有效）
+export PRIVATE_KEY=0x你的测试网钱包私钥
+# 方式二：使用 .env（在 solidity/.env 中写 PRIVATE_KEY=0x...，不要用 src/.env）
+source .env
+
+forge script script/Deploy.s.sol:DeployScript --rpc-url https://base-sepolia-rpc.publicnode.com --broadcast
+```
+
+- Sepolia 的 `--rpc-url` 可换成任意 Sepolia RPC（如 Alchemy、Public 等）。
 - 部署成功后终端会打印：
   - **MockERC20 (deposit token):** `0x...`
-  - **PredictionMarketVaultFactory:** `0x...`
+  - **OCPVaultFactory:** `0x...`
 
 记下这两个地址，下一步配置 API 要用。
 
@@ -69,7 +220,7 @@ cp .env.example .env
 |------|------|
 | `NEXT_PUBLIC_RPC_URL` | 测试网 RPC（与合约部署时一致），如 `https://sepolia.infura.io/v3/xxx` |
 | `PRIVATE_KEY` | **创建金库用的钱包**私钥（建议与部署合约的钱包一致或单独一个测试网钱包） |
-| `FACTORY_ADDRESS` | 上一步得到的 `PredictionMarketVaultFactory` 地址 |
+| `FACTORY_ADDRESS` | 上一步得到的 `OCPVaultFactory` 地址 |
 | `DEPOSIT_TOKEN_ADDRESS` | 上一步得到的 `MockERC20` 地址 |
 
 可选：

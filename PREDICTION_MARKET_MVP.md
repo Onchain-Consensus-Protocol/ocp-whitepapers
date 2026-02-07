@@ -4,7 +4,7 @@
 
 ## 已实现（最小可用链）
 
-1. **金库投票决定结果**：`PredictionMarketVault`，投票=是，不投票=否，占比决定 outcome
+1. **金库投票决定结果**：`OCPVault`，投票=是，不投票=否，占比决定 outcome
 2. **预测市场交易**：恒定乘积 AMM，`buyYes` / `buyNo` / `sellYes` / `sellNo`
 3. **手续费进金库**：0.3% 交易费 donate 到金库，按本金占比分红
 4. **锁定至结算**：金库存款在 `resolutionTime` 之前不可提款
@@ -13,9 +13,9 @@
 
 | 合约 | 路径 | 说明 |
 |------|------|------|
-| PredictionMarketVault | `core/PredictionMarketVault.sol` | 预测市场专用金库，deposit/vote/donate/withdraw |
-| PredictionMarketVaultFactory | `factory/PredictionMarketVaultFactory.sol` | 一次性创建金库 + 市场 |
-| IPredictionMarketVault | `interfaces/IPredictionMarketVault.sol` | 金库最小接口 |
+| OCPVault | `core/OCPVault.sol` | OCP 金库，deposit/vote/donate/withdraw |
+| OCPVaultFactory | `factory/OCPVaultFactory.sol` | 一次性创建金库 + 市场 |
+| IOCPVault | `interfaces/IOCPVault.sol` | 金库最小接口 |
 
 ## 修改合约
 
