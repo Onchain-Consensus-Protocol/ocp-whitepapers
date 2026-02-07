@@ -283,12 +283,17 @@ npm run start
 
 **只发主页时**：不用部署合约、不用部署 ocp-api，只把前端直接托管到 Vercel 即可。
 
-### 方式 A：用 GitHub 部署（推送代码后自动部署）
+### 方式 A：用 GitHub 部署（推荐，推送后自动部署）
 
-1. 把项目推送到 GitHub（若尚未推送）。
-2. 用 GitHub 登录 [Vercel](https://vercel.com)，**Add New → Project**，导入仓库，**Root Directory** 填 `ocp-browser`。
-3. **Framework** 选 Vite，**Build** 用 `npm run build`，**Output** 为 `dist`，需要的话在 **Environment Variables** 里加变量。
-4. 点击 **Deploy**，之后每次 push 到该仓库会自动重新部署。
+1. 把项目推送到 GitHub（若尚未推送）：
+   ```bash
+   git add -A && git commit -m "your message" && git push origin main
+   ```
+2. 用 GitHub 登录 [Vercel](https://vercel.com)，**Add New → Project**，选择仓库 `cypherpunk-bc/OCP`（或你的 fork）。
+3. **重要**：在 **Configure Project** 里把 **Root Directory** 设为 `ocp-browser`（点 Edit 后输入 `ocp-browser`）。
+4. **Framework Preset** 选 Vite；**Build Command** 留空或 `npm run build`；**Output Directory** 留空或 `dist`。`ocp-browser/vercel.json` 已写好，一般无需改。
+5. 如需测试网配置，在 **Environment Variables** 里添加 `VITE_FACTORY_ADDRESS`、`VITE_DEPOSIT_TOKEN_ADDRESS`、`VITE_RPC_URL`、`VITE_CHAIN_ID`、`VITE_EXPLORER` 等（与 `ocp-browser/.env.example` 一致）。
+6. 点击 **Deploy**。部署完成后会得到 `https://xxx.vercel.app`，之后每次 push 到该仓库会自动重新部署。
 
 ### 方式 B：本地用 Vercel CLI 部署（无需 GitHub）
 
