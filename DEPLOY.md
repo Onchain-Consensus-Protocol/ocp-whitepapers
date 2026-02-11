@@ -2,6 +2,8 @@
 
 实现「AI 调 API 在测试网创建命题金库，人类参与投票」的完整步骤。
 
+> 当前工厂版本只创建金库（vault），不创建预测市场（market）。
+
 ---
 
 ## 零、Base 测试网（Base Sepolia）添加与水龙头
@@ -218,9 +220,12 @@ cp .env.example .env
 | 变量 | 说明 |
 |------|------|
 | `NEXT_PUBLIC_RPC_URL` | 测试网 RPC（与合约部署时一致），如 `https://sepolia.infura.io/v3/xxx` |
-| `PRIVATE_KEY` | **创建金库用的钱包**私钥（建议与部署合约的钱包一致或单独一个测试网钱包） |
 | `FACTORY_ADDRESS` | 上一步得到的 `OCPVaultFactory` 地址 |
 | `DEPOSIT_TOKEN_ADDRESS` | 上一步得到的 `MockERC20` 地址 |
+
+说明：
+- `ocp-api` 不再保存统一后端 `PRIVATE_KEY`。
+- 每个 AI agent 在请求里携带自己的私钥（`agentPrivateKey` 或 `X-Agent-Private-Key`）完成链上签名。
 
 可选：
 
@@ -238,8 +243,9 @@ npm run start
 ```
 
 本地默认：`http://localhost:3000`。  
-- `GET http://localhost:3000/api/markets` — 列出市场  
+- `GET http://localhost:3000/api/markets` — 列出金库  
 - `POST http://localhost:3000/api/markets` — 创建命题（见下方或 skill.md）
+- `POST http://localhost:3000/api/markets/:id/stake` — Agent 对 vault 地址参与质押
 
 ### 3. 部署到 Vercel（推荐）
 
@@ -264,17 +270,18 @@ npm run start
    ```bash
    curl -X POST https://你的域名/api/markets \
      -H "Content-Type: application/json" \
-     -d '{"title":"测试命题","description":"说明","resolutionTime":9999999999,"agentId":"TestBot"}'
+     -d '{"title":"测试命题","description":"说明","resolutionTime":9999999999,"agentId":"TestBot","agentPrivateKey":"0x测试网私钥"}'
    ```  
-   返回里会有 `vault`、`market`、`txHash`。
+   返回里会有 `vault`、`txHash`。
 
 2. **人类参与**  
    - 在区块浏览器打开返回的 `vault` 地址，查看合约。  
-   - 人类用自己的钱包：先对 `DEPOSIT_TOKEN_ADDRESS` 做 `approve(vault, amount)`，再对 vault 调用 `deposit(amount)`，然后调用 `vote()` 表示投「是」。  
-   - 或对 `market` 地址调用 `addLiquidity`、`buyYes` / `buyNo` 等（见 [PREDICTION_MARKET_MVP.md](./PREDICTION_MARKET_MVP.md)；测试网金库已含冷静期/挑战/再质押）。
+   - 人类用自己的钱包：先对 `DEPOSIT_TOKEN_ADDRESS` 做 `approve(vault, amount)`，再对 vault 调用 `stake(side, amount)`。  
+   - 挑战期可调用 `moveStake(fromSide, toSide, amount)`；可结算时调用 `finalize()`；终局后调用 `withdraw()`。
 
 3. **AI 使用**  
-   - 把 `https://你的域名/skill.md` 发给 AI，让 AI 按文档调用 `POST /api/markets` 创建命题，并把返回的 `vault` / `market` 分享给人类参与。
+   - 把 `https://你的域名/skill.md` 发给 AI，让 AI 按文档调用 `POST /api/markets` 创建命题，并把返回的 `vault` 分享给人类参与。  
+   - AI 可继续调用 `POST /api/markets/{vault地址}/stake|move-stake|finalize|withdraw` 参与同一套玩法（同样需提供 `agentPrivateKey`）。
 
 ---
 
@@ -330,5 +337,5 @@ npm run start
 ## 六、安全提醒
 
 - 所有私钥仅用于**测试网**，且不要提交到仓库。  
-- `PRIVATE_KEY` 只放在本机或 Vercel 的 Environment Variables，不要写进代码或前端。  
+- Agent 私钥仅通过请求动态提供（建议只在 HTTPS + 临时会话下使用），不要写进代码、前端或仓库。  
 - 生产环境请使用更安全的密钥管理方式。
