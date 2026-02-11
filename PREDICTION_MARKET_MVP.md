@@ -1,13 +1,14 @@
-# 预测市场 MVP 实现说明
+# 预测市场实现说明（基线 / 原 MVP）
 
-> 本 MVP 基于**共识上链协议（OCP）**与**承诺证明（POC）**的预测市场应用。协议设计（一次性挑战）见 [POC_WHITEPAPER_CN.md](./POC_WHITEPAPER_CN.md)。
+> 本文档描述预测市场的**基线能力**（原 MVP：金库 + 交易 + 解析 + 分红）。  
+> **当前测试网合约已超越 MVP**，金库已包含冷静期、一次性挑战、挑战期（再质押/移仓）等 POC 核心机制，详见 [PREDICTION_MARKET_IMPLEMENTATION_STATUS.md](./PREDICTION_MARKET_IMPLEMENTATION_STATUS.md)。协议设计见 [POC_WHITEPAPER_CN.md](./POC_WHITEPAPER_CN.md)。
 
-## 已实现（最小可用链）
+## 基线能力（原「最小可用链」）
 
-1. **金库投票决定结果**：`OCPVault`，投票=是，不投票=否，占比决定 outcome
+1. **金库投票决定结果**：`OCPVault`，三态 YES/NO/INVALID，占比决定 outcome
 2. **预测市场交易**：恒定乘积 AMM，`buyYes` / `buyNo` / `sellYes` / `sellNo`
 3. **手续费进金库**：0.3% 交易费 donate 到金库，按本金占比分红
-4. **锁定至结算**：金库存款在 `resolutionTime` 之前不可提款
+4. **锁定至结算**：金库存款在终局之前不可提款
 
 ## 新增合约
 
@@ -31,7 +32,10 @@
 4. `resolutionTime` 后任何人调用 `resolve()`，读取金库投票结果
 5. 用户 `redeem()` 赢方份额，`withdraw()` 金库本金+分红
 
-## 待实现（后续版本）
+## 测试网已超出本文档（当前合约）
 
-- **一次性挑战 + 最终对决期**（OCP/POC 协议核心）
+- **一次性挑战 + 挑战期（再质押/移仓）**：已在 `OCPVault` 中实现，见实现状态文档。
+
+## 尚未实现（后续版本）
+
 - 躺平惩罚（30/70 分红）

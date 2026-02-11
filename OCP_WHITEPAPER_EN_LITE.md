@@ -45,6 +45,6 @@ We’re not claiming OCP outputs “truth.” It outputs **consensus that was ex
 
 - Full narrative and design goals: **OCP Whitepaper**
 - Mechanism, game theory, bond rules: **POC Whitepaper**
-- First application: **Oracle-free prediction market** on top of OCP
+- First application: **OCP Game Vault** on top of OCP
 
 Happy to discuss design tradeoffs, L2/composability use cases, or integration ideas in the thread.

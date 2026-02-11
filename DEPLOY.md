@@ -16,7 +16,7 @@
 | 字段 | 值 |
 |------|-----|
 | **网络名称** | Base Sepolia |
-| **RPC URL** | `https://base-sepolia-rpc.publicnode.com`（或 `https://sepolia.base.org`） |
+| **RPC URL** | `https://sepolia.base.org` |
 | **Chain ID** | `84532` |
 | **货币符号** | ETH |
 | **区块浏览器** | `https://sepolia.basescan.org` |
@@ -54,8 +54,8 @@
 
 | 合约 | 地址 |
 |------|------|
-| MockERC20 (deposit token) | `0xe343be8F1d8572937da49234882e6a1eF4FFEb26` |
-| OCPVaultFactory | `0x794D87e33Eb83Dd6f735f76F8Cd551C2901B9b8D` |
+| MockERC20 (deposit token) | `0x7D157084E2A7dE4941F29B873bA14a9286f9BE85` |
+| OCPVaultFactory | `0x5D158cd6983b00e2D1367969F3AD0412B23794a5` |
 
 ocp-api 的 `.env` 与前端 `ocp-browser/.env` 已按上表配置（FACTORY_ADDRESS / VITE_FACTORY_ADDRESS、DEPOSIT_TOKEN_ADDRESS / VITE_DEPOSIT_TOKEN_ADDRESS）。
 
@@ -66,7 +66,7 @@ ocp-api 的 `.env` 与前端 `ocp-browser/.env` 已按上表配置（FACTORY_ADD
 ```bash
 cd solidity
 source .env
-forge script script/Deploy.s.sol:DeployScript --rpc-url https://base-sepolia-rpc.publicnode.com --broadcast
+forge script script/Deploy.s.sol:DeployScript --rpc-url https://sepolia.base.org --broadcast
 ```
 
 终端会输出两行，例如：
@@ -104,17 +104,17 @@ forge verify-contract 0xd6f268AF3C4C4Dd7852f51aedd9De12e7048Ec73 script/Deploy.s
 
 在 `solidity` 目录下执行（需已设置 `ETHERSCAN_API_KEY`，如 `source .env`）：
 
-**金库 OCPVault**（地址 `0x2EC476C145F332539F9311802dDACb48bF16f584`）：
+**金库 OCPVault**（地址 `0x<YOUR_VAULT>`）：
 
 ```bash
 cd solidity && source .env
-forge verify-contract 0x2EC476C145F332539F9311802dDACb48bF16f584 src/core/OCPVault.sol:OCPVault --chain base-sepolia --constructor-args $(cast abi-encode "constructor(address,address,uint256)" 0x32eB2a7d95301a1B7f42Ad64fd255D2c273f6f8f 0xd6f268AF3C4C4Dd7852f51aedd9De12e7048Ec73 1770436800) --watch
+forge verify-contract 0x<YOUR_VAULT> src/core/OCPVault.sol:OCPVault --chain base-sepolia --constructor-args $(cast abi-encode "constructor(address,address,uint256)" 0x32eB2a7d95301a1B7f42Ad64fd255D2c273f6f8f 0xd6f268AF3C4C4Dd7852f51aedd9De12e7048Ec73 1770436800) --watch
 ```
 
-**预测市场 PredictionMarket**（地址 `0x5E3e3D20f429C4f9F8675DA354210c6FfBEb2602`）：
+**预测市场 PredictionMarket**（地址 `0x<YOUR_MARKET>`）：
 
 ```bash
-forge verify-contract 0x5E3e3D20f429C4f9F8675DA354210c6FfBEb2602 src/market/PredictionMarket.sol:PredictionMarket --chain base-sepolia --constructor-args $(cast abi-encode "constructor(address,address,uint8,bytes,uint256)" 0x2EC476C145F332539F9311802dDACb48bF16f584 0x0000000000000000000000000000000000000000 0 0x 1770436800) --watch
+forge verify-contract 0x<YOUR_MARKET> src/market/PredictionMarket.sol:PredictionMarket --chain base-sepolia --constructor-args $(cast abi-encode "constructor(address,address,uint8,bytes,uint256)" 0x<YOUR_VAULT> 0x0000000000000000000000000000000000000000 0 0x 1770436800) --watch
 ```
 
 验证成功后，在 https://sepolia.basescan.org 搜索上述地址即可看到源码与 Read/Write Contract。
@@ -124,15 +124,14 @@ forge verify-contract 0x5E3e3D20f429C4f9F8675DA354210c6FfBEb2602 src/market/Pred
 部署合约时 `--rpc-url` 使用（任选其一）：
 
 ```text
-https://base-sepolia-rpc.publicnode.com
-```
-或 `https://sepolia.base.org`
+https://sepolia.base.org
 
 前端/API 若接 Base Sepolia，环境变量示例：
 
 - `VITE_CHAIN_ID=84532`
-- `VITE_RPC_URL=https://base-sepolia-rpc.publicnode.com`
+- `VITE_RPC_URL=https://sepolia.base.org`
 - `VITE_EXPLORER=https://sepolia.basescan.org`
+- `VITE_MARKET_ENABLED=true`（开启预测市场功能；不设置则默认关闭）
 
 ---
 
@@ -187,7 +186,7 @@ export PRIVATE_KEY=0x你的测试网钱包私钥
 # 方式二：使用 .env（在 solidity/.env 中写 PRIVATE_KEY=0x...，不要用 src/.env）
 source .env
 
-forge script script/Deploy.s.sol:DeployScript --rpc-url https://base-sepolia-rpc.publicnode.com --broadcast
+forge script script/Deploy.s.sol:DeployScript --rpc-url https://sepolia.base.org --broadcast
 ```
 
 - Sepolia 的 `--rpc-url` 可换成任意 Sepolia RPC（如 Alchemy、Public 等）。
@@ -272,7 +271,7 @@ npm run start
 2. **人类参与**  
    - 在区块浏览器打开返回的 `vault` 地址，查看合约。  
    - 人类用自己的钱包：先对 `DEPOSIT_TOKEN_ADDRESS` 做 `approve(vault, amount)`，再对 vault 调用 `deposit(amount)`，然后调用 `vote()` 表示投「是」。  
-   - 或对 `market` 地址调用 `addLiquidity`、`buyYes` / `buyNo` 等（见 [PREDICTION_MARKET_MVP.md](./PREDICTION_MARKET_MVP.md)）。
+   - 或对 `market` 地址调用 `addLiquidity`、`buyYes` / `buyNo` 等（见 [PREDICTION_MARKET_MVP.md](./PREDICTION_MARKET_MVP.md)；测试网金库已含冷静期/挑战/再质押）。
 
 3. **AI 使用**  
    - 把 `https://你的域名/skill.md` 发给 AI，让 AI 按文档调用 `POST /api/markets` 创建命题，并把返回的 `vault` / `market` 分享给人类参与。
