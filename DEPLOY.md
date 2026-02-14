@@ -59,7 +59,7 @@
 | MockERC20 (deposit token) | `0x7D157084E2A7dE4941F29B873bA14a9286f9BE85` |
 | OCPVaultFactory | `0x5D158cd6983b00e2D1367969F3AD0412B23794a5` |
 
-ocp-api 的 `.env` 与前端 `ocp-browser/.env` 已按上表配置（FACTORY_ADDRESS / VITE_FACTORY_ADDRESS、DEPOSIT_TOKEN_ADDRESS / VITE_DEPOSIT_TOKEN_ADDRESS）。
+ocp-api 的 `.env` 与前端 `ocp-browser/.env` 已按上表配置（FACTORY_ADDRESS / VITE_FACTORY_ADDRESS、DEPOSIT_TOKEN_ADDRESS / VITE_DEPOSIT_TOKEN_ADDRESS）。若使用 **ocp-agent-gate** 或自行部署，以各项目 `.env` 中的工厂/代币地址为准。前端若遇「链上读取失败 / missing revert data」，可将 `VITE_RPC_URL` 换为 Alchemy 或 Infura 的 Base Sepolia 节点。
 
 ### 重新部署合约并更新前端/API 地址
 
@@ -131,7 +131,7 @@ https://sepolia.base.org
 前端/API 若接 Base Sepolia，环境变量示例：
 
 - `VITE_CHAIN_ID=84532`
-- `VITE_RPC_URL=https://sepolia.base.org`
+- `VITE_RPC_URL=https://sepolia.base.org`（若遇 missing revert data 可改用 Alchemy/Infura 等 Base Sepolia RPC）
 - `VITE_EXPLORER=https://sepolia.basescan.org`
 - `VITE_MARKET_ENABLED=true`（开启预测市场功能；不设置则默认关闭）
 
@@ -334,7 +334,100 @@ npm run start
 
 ---
 
-## 六、安全提醒
+## 六、Stake War 长期事件流（固定 HTTPS，不用临时隧道）
+
+`ocp-browser` 在公网 HTTPS 下要看实时事件，必须连到公网 HTTPS 事件服务。  
+`loca.lt/localhost.run` 适合临时演示，不适合长期稳定。推荐把 `ocp-agent-gate` 的流服务长期部署为固定域名（例如 `https://stream.ocp-protocol.org`）。
+
+### 1) 部署独立流服务（ocp-agent-gate）
+
+`ocp-agent-gate` 已内置长期流服务入口：
+
+```bash
+cd ocp-agent-gate
+npm ci
+npm run stream
+```
+
+环境变量（部署平台里设置）：
+
+- `PORT`（平台注入）或 `STAKE_WAR_STREAM_PORT`：默认 `8787`
+- `STAKE_WAR_STREAM_HOST`：默认 `0.0.0.0`
+- `STAKE_WAR_EVENT_JSONL`：可选，事件落盘路径
+- `STAKE_WAR_PUBLISH_TOKEN`：可选，开启 `POST /stake-war/publish` 鉴权
+
+服务端接口：
+
+- `GET /health`
+- `GET /stake-war/:vault/events`（SSE）
+- `GET /stake-war/:vault/snapshot`
+- `POST /stake-war/publish`（给 `event-stake` 远端推送事件）
+
+仓库内已提供 `ocp-agent-gate/Dockerfile`，可直接部署到支持长连接的服务（Railway/Render/Fly.io 等）。
+
+### 2) event-stake 推送到固定服务
+
+启动 war 时加上 `--relay-url`（和可选 `--relay-token`）：
+
+```bash
+cd ocp-agent-gate
+node --import tsx src/cli.ts event-stake \
+  --symbol eth \
+  --in 604800 \
+  --add-every 60 \
+  --relay-url "https://stream.ocp-protocol.org" \
+  --relay-token "<token>" \
+  "ETH will be higher in 7 days than creation price."
+```
+
+也可以用环境变量：
+
+- `STAKE_WAR_RELAY_URL`
+- `STAKE_WAR_RELAY_TOKEN`
+
+### 3) 前端指向固定事件服务
+
+在 `ocp-browser` 配置：
+
+- `VITE_STAKE_WAR_API_BASE=https://stream.ocp-protocol.org`
+
+这样线上访问 `https://ocp-protocol.org/stake-war.html?vault=0x...` 时，不再需要每次加临时 tunnel 的 `api` 参数。
+
+---
+
+## 七、Render 快速落地（7 天演示）
+
+如果你要先把 7 天演示稳定跑起来，最省事的方式是：
+
+1. 用仓库根目录的 `render.yaml` 部署 `ocp-stake-war-stream`（Web Service）。
+2. 部署完成后记下服务域名（例如 `https://ocp-stake-war-stream.onrender.com`）。
+3. 在 `ocp-agent-gate/.env` 设置：
+   - `STAKE_WAR_RELAY_URL=https://ocp-stake-war-stream.onrender.com`
+   - `STAKE_WAR_RELAY_TOKEN=<Render 里 STAKE_WAR_PUBLISH_TOKEN 的值>`
+4. 启动 7 天演示（本机或任意可运行 agent 命令的机器）：
+
+```bash
+cd ocp-agent-gate
+node --import tsx src/cli.ts event-stake \
+  --symbol eth \
+  --lan en \
+  --in 604800 \
+  --add-every 60 \
+  "ETH will be higher in 7 days than the creation price. YES=up, NO=down, INVALID=flat/uncertain."
+```
+
+5. 前端可直接使用固定 API：
+   - `https://ocp-protocol.org/stake-war.html?vault=0x...&api=https://ocp-stake-war-stream.onrender.com`
+
+注意：
+
+- 这套方案把“事件流服务”放在 Render，稳定替代临时 tunnel。
+- `event-stake` 本身仍依赖 `AGENT_A_CMD/B/C_CMD`；如果你用的是本地 `ollama run ...`，那这段 runner 仍需在能跑 ollama 的机器上执行。  
+  如果要 **100% 全部跑在 Render**，需要把 agent 命令改成可在云端调用的模型接口。
+
+---
+
+## 八、安全提醒
 
 - 所有私钥仅用于**测试网**，且不要提交到仓库。  
 - Agent 私钥仅通过请求动态提供（建议只在 HTTPS + 临时会话下使用），不要写进代码、前端或仓库。  
