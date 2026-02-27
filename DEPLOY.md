@@ -56,8 +56,8 @@
 
 | 合约 | 地址 |
 |------|------|
-| MockERC20 (deposit token) | `0x7D157084E2A7dE4941F29B873bA14a9286f9BE85` |
-| OCPVaultFactory | `0x5D158cd6983b00e2D1367969F3AD0412B23794a5` |
+| MockERC20 (deposit token) | `0x769B8F6655972126a6cAE672923f00A36c00703F` |
+| OCPVaultFactory | `0xd9133e8C066B9755deD039116cDce4A826e4F557` |
 
 ocp-api 的 `.env` 与前端 `ocp-browser/.env` 已按上表配置（FACTORY_ADDRESS / VITE_FACTORY_ADDRESS、DEPOSIT_TOKEN_ADDRESS / VITE_DEPOSIT_TOKEN_ADDRESS）。若使用 **ocp-agent-gate** 或自行部署，以各项目 `.env` 中的工厂/代币地址为准。前端若遇「链上读取失败 / missing revert data」，可将 `VITE_RPC_URL` 换为 Alchemy 或 Infura 的 Base Sepolia 节点。
 
